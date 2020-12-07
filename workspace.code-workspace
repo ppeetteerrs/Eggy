@@ -1,0 +1,12 @@
+{
+  "folders": [
+	{
+		"name": "stm32",
+		"path": "stm32"
+	},
+	{
+		"path": "image_parser"
+	}
+],
+  "settings": {}
+}
