@@ -1,6 +1,7 @@
 from serial import Serial
 import time
 import pickle
+from config import FREQ
 
 
 class Draw(object):
@@ -11,18 +12,12 @@ class Draw(object):
 
     def run(self):
         for item in self.steps:
-            leftus = item[0]
-            rightus = item[1]
+            left = item[0]
+            right = item[1]
+            self.port.write(bytes("{:05d}{:05d}".format(left, right), "ascii"))
+            print("L - {:05d} R - {:05d}".format(left, right))
+            time.sleep(1/FREQ)
 
-            self.port.write(bytes("{}{}".format(leftus, rightus), "ascii"))
-            time.sleep(20/1000)
-
-
-# time.sleep(1)
-# for delta in deltas:
-#     time.sleep(0.010)
-#     ser.write(bytes("l{}\r".format(delta[0]), "ascii"))
-#     ser.write(bytes("r{}\r".format(delta[1]), "ascii"))
 
 if __name__ == "__main__":
     port = Serial(port="COM14", baudrate=115200, timeout=5)

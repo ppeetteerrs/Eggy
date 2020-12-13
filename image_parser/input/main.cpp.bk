@@ -1,0 +1,97 @@
+#include <Arduino.h>
+#include <Servo.h>
+/* --------------------------------- Macros --------------------------------- */
+// Servo Pins 9 and 10 (OC1A, OC1B)
+#define SERVO_1 0b00000010
+#define SERVO_2 0b00000100
+
+String	 serial1;
+String	 serial2;
+uint16_t cnt1	  = 1000;
+uint16_t cnt2	  = 1000;
+int		 i		  = 0;
+bool	 new_data = false;
+
+/* -------------------------------- Functions ------------------------------- */
+// Setup
+void setup() {
+	Serial.begin(115200);
+	// Set servo pins to OUTPUT mode
+	DDRB |= SERVO_1 | SERVO_2;
+	// Setup Timer 1 Control Registers
+	// COM1A1:0 = COM1B1:0 = 0b10 - Non-inverting PWM Mode
+	// WGM13:10 = 14 - Fast PWM Mode with TOP = ICR1
+	// PWM Frequency: 50Hz
+	// Prescaler = 8, TOP = 40000 - 1
+	TCCR1A = _BV(COM1A1) | _BV(COM1B1) | _BV(WGM11);
+	TCCR1B = (TCCR1B & 0b11000000) | _BV(WGM13) | _BV(WGM12) | _BV(CS11);
+	ICR1   = 40000 - 1;
+	// Enable Timer Interrupt
+	TIMSK1 = (TIMSK1 & 0b11111000) | 0b001;
+	OCR1A  = cnt1;
+	OCR1B  = cnt2;
+}
+
+void loop() {
+}
+
+ISR(TIMER1_OVF_vect) {
+	if (Serial.available() >= 10) {
+		serial1 = "";
+		serial2 = "";
+		for (i = 0; i < 5; i++) {
+			serial1 += (char)Serial.read();
+		}
+		for (i = 0; i < 5; i++) {
+			serial2 += (char)Serial.read();
+		}
+		cnt1	 = serial1.toInt();
+		cnt2	 = serial2.toInt();
+		new_data = true;
+	} else if (new_data) {
+		OCR1A	 = cnt1;
+		OCR1B	 = cnt2;
+		new_data = false;
+		Serial.print(OCR1A);
+		Serial.print(" ");
+		Serial.println(OCR1B);
+	}
+}
+
+// #include <Arduino.h>
+// #include <Servo.h>
+
+// Servo	 servo1;
+// Servo	 servo2;
+// String	 serial1;
+// String	 serial2;
+// uint16_t cnt1 = 500;
+// uint16_t cnt2 = 500;
+// int		 i	  = 0;
+
+// void setup() {
+// 	Serial.begin(115200);
+// 	servo1.attach(9);
+// 	servo2.attach(10);
+// 	servo1.writeMicroseconds(cnt1);
+// 	servo2.writeMicroseconds(cnt2);
+// }
+
+// void loop() {
+// 	if (Serial.available() >= 10) {
+// 		serial1 = "";
+// 		serial2 = "";
+// 		for (i = 0; i < 5; i++) {
+// 			serial1 += (char)Serial.read();
+// 		}
+// 		for (i = 0; i < 5; i++) {
+// 			serial2 += (char)Serial.read();
+// 		}
+// 		cnt1 = serial1.toInt();
+// 		cnt2 = serial2.toInt();
+// 	} else {
+// 		servo2.writeMicroseconds(cnt2);
+// 		servo1.writeMicroseconds(cnt1);
+// 		delay(20);
+// 	}
+// }
